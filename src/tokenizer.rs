@@ -1,11 +1,11 @@
 use anyhow::{bail, Result};
-use std::{fs::File, any};
+use std::fs::File;
 
 use vibrato::{Dictionary, Tokenizer};
 
-struct RawToken {
-    surface: String,
-    feature: String,
+pub struct RawToken {
+    pub surface: String,
+    pub feature: String,
 }
 
 impl From<vibrato::token::Token<'_, '_>> for RawToken {
@@ -17,7 +17,8 @@ impl From<vibrato::token::Token<'_, '_>> for RawToken {
     }
 }
 
-struct PreparedToken {
+#[derive(Clone, Debug)]
+pub struct PreparedToken {
     literal: String,
     pos: POS,
     pos2: POS,
@@ -30,98 +31,98 @@ struct PreparedToken {
     hatsuon: String,
 }
 
-#[derive(PartialEq)]
+#[derive(PartialEq, Clone, Debug)]
 enum POS {
-    MEISHI,
-    KOYUUMEISHI,
-    DAIMEISHI,
-    JODOUSHI,
-    KAZU,
-    JOSHI,
-    SETTOUSHI,
-    DOUSHI,
-    KIGOU,
-    FIRAA,
-    SONOTA,
-    KANDOUSHI,
-    RENTAISHI,
-    SETSUZOKUSHI,
-    FUKUSHI,
-    SETSUZOKUJOSHI,
-    KEIYOUSHI,
-    HIJIRITSU,
-    FUKUSHIKANOU,
-    SAHENSETSUZOKU,
-    KEIYOUDOUSHIGOKAN,
-    NAIKEIYOUSHIGOKAN,
-    JODOUSHIGOKAN,
-    FUKUSHIKA,
-    TAIGENSETSUZOKU,
-    RENTAIKA,
-    TOKUSHU,
-    SETSUBI,
-    SETSUZOKUSHITEKI,
-    DOUSHIHIJIRITSUTEKI,
-    SAHEN_SURU,
-    TOKUSHU_TA,
-    TOKUSHU_NAI,
-    TOKUSHU_TAI,
-    TOKUSHU_DESU,
-    TOKUSHU_DA,
-    TOKUSHU_MASU,
-    TOKUSHU_NU,
-    FUHENKAGATA,
-    JINMEI,
-    MEIREI_I,
-    KAKARIJOSHI,
+    Meishi,
+    KoyuuMeishi,
+    DaiMeishi,
+    JoDoushi,
+    Kazu,
+    Joshi,
+    Settoushi,
+    Doushi,
+    Kigou,
+    Firaa,
+    Sonota,
+    Kandoushi,
+    Rentaishi,
+    Setsuzokushi,
+    Fukushi,
+    Setsuzokujoshi,
+    Keiyoushi,
+    Hijiritsu,
+    Fukushikanou,
+    Sahensetsuzoku,
+    Keiyoudoushigokan,
+    Naikeiyoushigokan,
+    Jodoushigokan,
+    Fukushika,
+    Taigensetsuzoku,
+    Rentaika,
+    Tokushu,
+    Setsubi,
+    Setsuzokushiteki,
+    Doushihijiritsuteki,
+    SahenSuru,
+    TokushuTa,
+    TokushuNai,
+    TokushuTai,
+    TokushuDesu,
+    TokushuDa,
+    TokushuMasu,
+    TokushuNu,
+    Fuhenkagata,
+    Jinmei,
+    MeireiI,
+    Kakarijoshi,
     Unknown,
 }
 
 impl From<&str> for POS {
     fn from(value: &str) -> Self {
         match value {
-            "名詞" => Self::MEISHI,
-            "固有名詞" => Self::KOYUUMEISHI,
-            "代名詞" => Self::DAIMEISHI,
-            "助動詞" => Self::JODOUSHI,
-            "数" => Self::KAZU,
-            "助詞" => Self::JOSHI,
-            "接頭詞" => Self::SETTOUSHI,
-            "動詞" => Self::DOUSHI,
-            "記号" => Self::KIGOU,
-            "フィラー" => Self::FIRAA,
-            "その他" => Self::SONOTA,
-            "感動詞" => Self::KANDOUSHI,
-            "連体詞" => Self::RENTAISHI,
-            "接続詞" => Self::SETSUZOKUSHI,
-            "副詞" => Self::FUKUSHI,
-            "接続助詞" => Self::SETSUZOKUJOSHI,
-            "形容詞" => Self::KEIYOUSHI,
-            "非自立" => Self::HIJIRITSU,
-            "副詞可能" => Self::FUKUSHIKANOU,
-            "サ変接続" => Self::SAHENSETSUZOKU,
-            "形容動詞語幹" => Self::KEIYOUDOUSHIGOKAN,
-            "ナイ形容詞語幹" => Self::NAIKEIYOUSHIGOKAN,
-            "助動詞語幹" => Self::JODOUSHIGOKAN,
-            "副詞化" => Self::FUKUSHIKA,
-            "体言接続" => Self::TAIGENSETSUZOKU,
-            "連体化" => Self::RENTAIKA,
-            "特殊" => Self::TOKUSHU,
-            "接尾" => Self::SETSUBI,
-            "接続詞的" => Self::SETSUZOKUSHITEKI,
-            "動詞非自立的" => Self::DOUSHIHIJIRITSUTEKI,
-            "サ変・スル" => Self::SAHEN_SURU,
-            "特殊・タ" => Self::TOKUSHU_TA,
-            "特殊・ナイ" => Self::TOKUSHU_NAI,
-            "特殊・タイ" => Self::TOKUSHU_TAI,
-            "特殊・デス" => Self::TOKUSHU_DESU,
-            "特殊・ダ" => Self::TOKUSHU_DA,
-            "特殊・マス" => Self::TOKUSHU_MASU,
-            "特殊・ヌ" => Self::TOKUSHU_NU,
-            "不変化型" => Self::FUHENKAGATA,
-            "人名" => Self::JINMEI,
-            "命令ｉ" => Self::MEIREI_I,
-            "係助詞" => Self::KAKARIJOSHI,
+            "名詞" => Self::Meishi,
+            "固有名詞" => Self::KoyuuMeishi,
+            "代名詞" => Self::DaiMeishi,
+            "助動詞" => Self::JoDoushi,
+            "数" => Self::Kazu,
+            "助詞" => Self::Joshi,
+            "接頭詞" => Self::Settoushi,
+            "動詞" => Self::Doushi,
+            "記号" => Self::Kigou,
+            "フィラー" => Self::Firaa,
+            "その他" => Self::Sonota,
+            "感動詞" => Self::Kandoushi,
+            "連体詞" => Self::Rentaishi,
+            "接続詞" => Self::Setsuzokushi,
+            "副詞" => Self::Fukushi,
+            "接続助詞" => Self::Setsuzokujoshi,
+            "形容詞" => Self::Keiyoushi,
+            "非自立" => Self::Hijiritsu,
+            "副詞可能" => Self::Fukushikanou,
+            "サ変接続" => Self::Sahensetsuzoku,
+            "形容動詞語幹" => Self::Keiyoudoushigokan,
+            "ナイ形容詞語幹" => Self::Naikeiyoushigokan,
+            "助動詞語幹" => Self::Jodoushigokan,
+            "副詞化" => Self::Fukushika,
+            "体言接続" => Self::Taigensetsuzoku,
+            "連体化" => Self::Rentaika,
+            "特殊" => Self::Tokushu,
+            "接尾" => Self::Setsubi,
+            "接続詞的" => Self::Setsuzokushiteki,
+            "動詞非自立的" => Self::Doushihijiritsuteki,
+            "サ変・スル" => Self::SahenSuru,
+            "特殊・タ" => Self::TokushuTa,
+            "特殊・ナイ" => Self::TokushuNai,
+            "特殊・タイ" => Self::TokushuTai,
+            "特殊・デス" => Self::TokushuDesu,
+            "特殊・ダ" => Self::TokushuDa,
+            "特殊・マス" => Self::TokushuMasu,
+            "特殊・ヌ" => Self::TokushuNu,
+            "不変化型" => Self::Fuhenkagata,
+            "人名" => Self::Jinmei,
+            "命令ｉ" => Self::MeireiI,
+            "係助詞" => Self::Kakarijoshi,
             _ => Self::Unknown,
         }
     }
@@ -135,21 +136,24 @@ const BA: &str = "ば";
 const NN: &str = "ん";
 const SA: &str = "さ";
 
+#[derive(Debug)]
+
 pub struct Word {
     word: String,
     lemma: String, // dictionary form
     part_of_speech: PartOfSpeech,
     tokens: Vec<PreparedToken>,
-    extra: WordExtra
+    extra: WordExtra,
 }
 
+#[derive(Debug)]
 pub struct WordExtra {
     reading: String,
     transcription: String,
-    grammar: Option<Grammar>
+    grammar: Option<Grammar>,
 }
 
-#[derive(PartialEq)]
+#[derive(PartialEq, Debug)]
 pub enum PartOfSpeech {
     Noun,
     ProperNoun,
@@ -170,16 +174,17 @@ pub enum PartOfSpeech {
     Other,
 }
 
+#[derive(Debug)]
 pub enum Grammar {
     Auxillary,
-    Nominal
+    Nominal,
 }
 
-fn vibrato_tokenize(sentence: &str) -> Result<Vec<RawToken>> {
+pub fn vibrato_tokenize(sentence: &str) -> Result<Vec<RawToken>> {
     let reader = zstd::Decoder::new(File::open("system.dic.zst")?)?;
     let mut dict = Dictionary::read(reader)?;
 
-    let tokenizer = Tokenizer::new(dict).ignore_space(true)?.max_grouping_len(0);
+    let tokenizer = Tokenizer::new(dict).ignore_space(true)?.max_grouping_len(24);
     let mut worker = tokenizer.new_worker();
 
     worker.reset_sentence(&sentence);
@@ -193,31 +198,38 @@ fn vibrato_tokenize(sentence: &str) -> Result<Vec<RawToken>> {
 pub fn prepare_tokens(raw_tokens: Vec<RawToken>) -> Result<Vec<PreparedToken>> {
     raw_tokens.into_iter().map(|raw_token| {
         let features: Vec<&str> = raw_token.feature.split(',').collect();
+
         let [pos, pos2, pos3, pos4, inflection_type, inflection_form, lemma, reading, hatsuon, ..] = features[..9] else {
             bail!("Couldn't read all features from token. Make sure you're using an IPADIC dictionary")
         };
 
-        let parsed_pos = [
-            POS::from(pos), 
-            POS::from(pos2),
-            POS::from(pos3),
-            POS::from(pos4),
-            POS::from(inflection_type),
-            POS::from(inflection_form)
-            ];
+        let parsed_pos = POS::from(pos);
+        let parsed_pos2 = POS::from(pos2);
+        let parsed_pos3 = POS::from(pos3);
+        let parsed_pos4 = POS::from(pos4);
+        let parsed_inf_type = POS::from(inflection_type);
+        let parsed_inf_form = POS::from(inflection_form);
 
-        if parsed_pos.into_iter().any(|p| p == POS::Unknown) {
+        if [
+            &parsed_pos,
+            &parsed_pos2,
+            &parsed_pos3,
+            &parsed_pos4,
+            &parsed_inf_type, 
+            &parsed_inf_form
+        ]
+        .into_iter().any(|p| p == &POS::Unknown) {
             bail!("Some of the tokens POS or inflection info couldn't be parsed");
         }
 
         Ok(PreparedToken {
             literal: raw_token.surface,
-            pos: parsed_pos[0],
-            pos2: parsed_pos[1],
-            pos3: parsed_pos[2],
-            pos4: parsed_pos[3],
-            inflection_type: parsed_pos[4],
-            inflection_form: parsed_pos[5],
+            pos: parsed_pos,
+            pos2: parsed_pos2,
+            pos3: parsed_pos3,
+            pos4: parsed_pos4,
+            inflection_type: parsed_inf_type,
+            inflection_form: parsed_inf_form,
             lemma: lemma.into(),
             reading:  reading.into(),
             hatsuon: hatsuon.into(),
@@ -228,10 +240,10 @@ pub fn prepare_tokens(raw_tokens: Vec<RawToken>) -> Result<Vec<PreparedToken>> {
 
 pub fn parse_into_words(tokens: Vec<PreparedToken>) -> Result<Vec<Word>> {
     let mut words: Vec<Word> = Vec::new();
-    let mut iter = tokens.into_iter().peekable();
-    let mut previous: Option<PreparedToken>;
+    let mut iter = tokens.iter().peekable();
+    let mut previous: Option<PreparedToken> = None;
 
-    for token in iter {
+    while let Some(token) = iter.next() {
         let mut pos: Option<PartOfSpeech> = None;
         let mut grammar: Option<Grammar> = None;
         let mut eat_next = false;
@@ -241,80 +253,91 @@ pub fn parse_into_words(tokens: Vec<PreparedToken>) -> Result<Vec<Word>> {
         let mut update_pos = false;
 
         match token.pos {
-            POS::MEISHI => {
+            POS::Meishi => {
                 pos = Some(PartOfSpeech::Noun);
                 match token.pos2 {
-                    POS::KOYUUMEISHI => {
+                    POS::KoyuuMeishi => {
                         pos = Some(PartOfSpeech::ProperNoun);
-                    },
-                    POS::DAIMEISHI => {
+                    }
+                    POS::DaiMeishi => {
                         pos = Some(PartOfSpeech::Pronoun);
-                    },
-                    POS::FUKUSHIKANOU |POS::SAHENSETSUZOKU | POS::KEIYOUDOUSHIGOKAN | POS::NAIKEIYOUSHIGOKAN => {
+                    }
+                    POS::Fukushikanou
+                    | POS::Sahensetsuzoku
+                    | POS::Keiyoudoushigokan
+                    | POS::Naikeiyoushigokan => {
                         if let Some(following) = iter.peek() {
-                            if following.inflection_type == POS::SAHEN_SURU {
+                            if following.inflection_type == POS::SahenSuru {
                                 pos = Some(PartOfSpeech::Verb);
                                 eat_next = true;
-                            } else if following.inflection_type == POS::TOKUSHU_DA {
+                            } else if following.inflection_type == POS::TokushuDa {
                                 pos = Some(PartOfSpeech::Adjective);
-                                if following.inflection_form == POS::TAIGENSETSUZOKU {
+                                if following.inflection_form == POS::Taigensetsuzoku {
                                     eat_next = true;
                                     eat_lemma = false;
                                 }
-                            } else if following.inflection_type == POS::TOKUSHU_NAI {
+                            } else if following.inflection_type == POS::TokushuNai {
                                 pos = Some(PartOfSpeech::Adjective);
                                 eat_next = true;
-                            } else if following.pos == POS::JOSHI && following.literal == NI {
+                            } else if following.pos == POS::Joshi && following.literal == NI {
                                 pos = Some(PartOfSpeech::Adverb);
                                 eat_next = false;
                             }
                         }
-                    },
-                    POS::HIJIRITSU | POS::TOKUSHU => {
+                    }
+                    POS::Hijiritsu | POS::Tokushu => {
                         if let Some(following) = iter.peek() {
                             match token.pos3 {
-                                POS::FUKUSHIKANOU => {
-                                    if following.pos == POS::JOSHI && following.literal == NI {
-                                    pos = Some(PartOfSpeech::Adverb);
-                                    eat_next = true;
-                                    }
-                                },
-                                POS::JODOUSHIGOKAN => {
-                                    if following.inflection_type == POS::TOKUSHU_DA {
-                                        pos = Some(PartOfSpeech::Verb);
-                                        grammar = Some(Grammar::Auxillary);
-
-                                        if following.inflection_form == POS::TAIGENSETSUZOKU {
-                                            eat_next = true;
-                                        }
-                                    } else if following.pos == POS::JOSHI && following.pos2 == POS::FUKUSHIKA {
+                                POS::Fukushikanou => {
+                                    if following.pos == POS::Joshi && following.literal == NI {
                                         pos = Some(PartOfSpeech::Adverb);
                                         eat_next = true;
                                     }
-                                },
-                                POS::KEIYOUDOUSHIGOKAN => {
-                                    pos = Some(PartOfSpeech::Adjective);
-                                    if (following.inflection_type == POS::TOKUSHU_DA && following.inflection_form == POS::TAIGENSETSUZOKU) 
-                                        || following.pos2 == POS::RENTAIKA {
+                                }
+                                POS::Jodoushigokan => {
+                                    if following.inflection_type == POS::TokushuDa {
+                                        pos = Some(PartOfSpeech::Verb);
+                                        grammar = Some(Grammar::Auxillary);
+
+                                        if following.inflection_form == POS::Taigensetsuzoku {
                                             eat_next = true;
                                         }
-                                },
-                                _ => ()
+                                    } else if following.pos == POS::Joshi
+                                        && following.pos2 == POS::Fukushika
+                                    {
+                                        pos = Some(PartOfSpeech::Adverb);
+                                        eat_next = true;
+                                    }
+                                }
+                                POS::Keiyoudoushigokan => {
+                                    pos = Some(PartOfSpeech::Adjective);
+                                    if (following.inflection_type == POS::TokushuDa
+                                        && following.inflection_form == POS::Taigensetsuzoku)
+                                        || following.pos2 == POS::Rentaika
+                                    {
+                                        eat_next = true;
+                                    }
+                                }
+                                _ => (),
                             }
                         }
                     }
-                    POS::KAZU => {
+                    POS::Kazu => {
                         pos = Some(PartOfSpeech::Number);
-                        if words.len() > 0 && words.last().is_some_and(|w| w.part_of_speech == PartOfSpeech::Number) {
+                        if words.len() > 0
+                            && words
+                                .last()
+                                .is_some_and(|w| w.part_of_speech == PartOfSpeech::Number)
+                        {
                             attach_to_previous = true;
                             also_attach_to_lemma = true;
                         }
-                    },
-                    POS::SETSUBI => {
-                        if token.pos3 == POS::JINMEI {
+                    }
+                    POS::Setsubi => {
+                        if token.pos3 == POS::Jinmei {
                             pos = Some(PartOfSpeech::Suffix);
                         } else {
-                            if token.pos3 == POS::TOKUSHU && token.lemma == SA {
+                            if token.pos3 == POS::Tokushu && token.lemma == SA {
                                 update_pos = true;
                                 pos = Some(PartOfSpeech::Noun);
                             } else {
@@ -322,80 +345,94 @@ pub fn parse_into_words(tokens: Vec<PreparedToken>) -> Result<Vec<Word>> {
                             }
                             attach_to_previous = true;
                         }
-                    },
-                    POS::SETSUZOKUSHITEKI => {
+                    }
+                    POS::Setsuzokushiteki => {
                         pos = Some(PartOfSpeech::Conjunction);
-                    },
-                    POS::DOUSHIHIJIRITSUTEKI => {
+                    }
+                    POS::Doushihijiritsuteki => {
                         pos = Some(PartOfSpeech::Verb);
                         grammar = Some(Grammar::Nominal)
-                    },
-                    _ => ()
-                }    
-            },
-            POS::SETTOUSHI => {
+                    }
+                    _ => (),
+                }
+            }
+            POS::Settoushi => {
                 pos = Some(PartOfSpeech::Prefix);
-            },
-            POS::JODOUSHI => {
+            }
+            POS::JoDoushi => {
                 pos = Some(PartOfSpeech::Postposition);
 
-                if (previous.is_none() || (previous.is_some_and(|p| p.pos2 != POS::KAKARIJOSHI))) &&
-                [POS::TOKUSHU_TA, POS::TOKUSHU_NAI, POS::TOKUSHU_TAI, POS::TOKUSHU_MASU, POS::TOKUSHU_NU].contains(&token.inflection_type) {
+                if (previous.is_none() || (previous.is_some_and(|p| p.pos2 != POS::Kakarijoshi)))
+                    && [
+                        POS::TokushuTa,
+                        POS::TokushuNai,
+                        POS::TokushuTai,
+                        POS::TokushuMasu,
+                        POS::TokushuNu,
+                    ]
+                    .contains(&token.inflection_type)
+                {
                     attach_to_previous = true;
-                } else if token.inflection_type == POS::FUHENKAGATA && token.lemma == NN {
+                } else if token.inflection_type == POS::Fuhenkagata && token.lemma == NN {
                     attach_to_previous = true;
-                } else if [POS::TOKUSHU_DA, POS::TOKUSHU_DESU].contains(&token.inflection_type) && token.literal != NA {
+                } else if [POS::TokushuDa, POS::TokushuDesu].contains(&token.inflection_type)
+                    && token.literal != NA
+                {
                     pos = Some(PartOfSpeech::Verb)
                 }
-            },
-            POS::DOUSHI => {
+            }
+            POS::Doushi => {
                 pos = Some(PartOfSpeech::Verb);
-                if token.pos2 == POS::SETSUBI {
+                if token.pos2 == POS::Setsubi {
                     attach_to_previous = true;
-                } else if token.pos2 == POS::HIJIRITSU && token.inflection_form != POS::MEIREI_I {
+                } else if token.pos2 == POS::Hijiritsu && token.inflection_form != POS::MeireiI {
                     attach_to_previous = true;
                 }
-            },
-            POS::KEIYOUSHI => {
+            }
+            POS::Keiyoushi => {
                 pos = Some(PartOfSpeech::Adjective);
-            },
-            POS::JOSHI => {
+            }
+            POS::Joshi => {
                 pos = Some(PartOfSpeech::Postposition);
-                if token.pos2 == POS::SETSUZOKUJOSHI && [TE, DE, BA].contains(&token.literal.as_str()) {
+                if token.pos2 == POS::Setsuzokujoshi
+                    && [TE, DE, BA].contains(&token.literal.as_str())
+                {
                     attach_to_previous = true;
                 }
-            },
-            POS::RENTAISHI => {
+            }
+            POS::Rentaishi => {
                 pos = Some(PartOfSpeech::Determiner);
-            },
-            POS::SETSUZOKUSHI => {
+            }
+            POS::Setsuzokushi => {
                 pos = Some(PartOfSpeech::Conjunction);
-            },
-            POS::FUKUSHI => {
+            }
+            POS::Fukushi => {
                 pos = Some(PartOfSpeech::Adverb);
-            },
-            POS::KIGOU => {
+            }
+            POS::Kigou => {
                 pos = Some(PartOfSpeech::Symbol);
-            },
-            POS::FIRAA | POS::KANDOUSHI => {
+            }
+            POS::Firaa | POS::Kandoushi => {
                 pos = Some(PartOfSpeech::Interjection);
-            },
-            POS::SONOTA => {
-                pos = Some(PartOfSpeech::Other)
-            },
-            _ => ()
+            }
+            POS::Sonota => pos = Some(PartOfSpeech::Other),
+            _ => (),
         }
-    
+
         // let's make sure we found *some* part of speech here
         if pos.is_none() {
-            bail!("Part of speech couldn't be recognized for token {}", token.literal);
+            bail!(
+                "Part of speech couldn't be recognized for token {}",
+                token.literal
+            );
         }
         let pos = pos.unwrap();
 
         if attach_to_previous && words.len() > 0 {
-            let mut last = words.last().unwrap();
+            let last = words.last_mut().unwrap();
 
-            last.tokens.push(token);
+            let token = token.clone();
+
             last.word.push_str(&token.literal);
             last.extra.reading.push_str(&token.reading);
             last.extra.transcription.push_str(&token.hatsuon);
@@ -405,18 +442,22 @@ pub fn parse_into_words(tokens: Vec<PreparedToken>) -> Result<Vec<Word>> {
             if update_pos {
                 last.part_of_speech = pos
             }
+
+            last.tokens.push(token);
         } else {
+            let token = token.clone();
+            let token2 = token.clone();
 
             let mut word = Word {
                 word: token.literal,
                 lemma: token.lemma,
                 part_of_speech: pos,
-                tokens: vec![token],
-                extra: WordExtra { 
-                    reading: token.reading, 
-                    transcription: token.hatsuon, 
-                    grammar 
-                }
+                tokens: vec![token2],
+                extra: WordExtra {
+                    reading: token.reading,
+                    transcription: token.hatsuon,
+                    grammar,
+                },
             };
 
             if eat_next {
@@ -424,18 +465,19 @@ pub fn parse_into_words(tokens: Vec<PreparedToken>) -> Result<Vec<Word>> {
                     bail!("eat_next was set despite there being no following token")
                 };
 
-                word.tokens.push(following);
+                let following = following.clone();
                 word.word.push_str(&following.literal);
                 word.extra.reading.push_str(&following.reading);
                 word.extra.transcription.push_str(&following.hatsuon);
                 if eat_lemma {
                     word.lemma.push_str(&following.lemma)
                 }
+                word.tokens.push(following);
             }
 
             words.push(word);
         }
-        previous = Some(token);
+        previous = Some(token.clone());
     }
 
     Ok(words)
