@@ -140,10 +140,16 @@ pub struct Word {
     lemma: String, // dictionary form
     part_of_speech: PartOfSpeech,
     tokens: Vec<PreparedToken>,
-    grammar_type: Option<Grammar>,
-    transcription: Option<String>
+    extra: WordExtra
 }
 
+pub struct WordExtra {
+    reading: String,
+    transcription: String,
+    grammar: Option<Grammar>
+}
+
+#[derive(PartialEq)]
 pub enum PartOfSpeech {
     Noun,
     ProperNoun,
@@ -221,7 +227,7 @@ pub fn prepare_tokens(raw_tokens: Vec<RawToken>) -> Result<Vec<PreparedToken>> {
 }
 
 pub fn parse_into_words(tokens: Vec<PreparedToken>) -> Result<Vec<Word>> {
-    let words: Vec<Word> = Vec::new();
+    let mut words: Vec<Word> = Vec::new();
     let mut iter = tokens.into_iter().peekable();
     let mut previous: Option<PreparedToken>;
 
@@ -251,9 +257,9 @@ pub fn parse_into_words(tokens: Vec<PreparedToken>) -> Result<Vec<Word>> {
                                 eat_next = true;
                             } else if following.inflection_type == POS::TOKUSHU_DA {
                                 pos = Some(PartOfSpeech::Adjective);
-                                if following.inflection_type == POS::TAIGENSETSUZOKU {
+                                if following.inflection_form == POS::TAIGENSETSUZOKU {
                                     eat_next = true;
-                                    eat_lemma = true;
+                                    eat_lemma = false;
                                 }
                             } else if following.inflection_type == POS::TOKUSHU_NAI {
                                 pos = Some(PartOfSpeech::Adjective);
@@ -292,7 +298,8 @@ pub fn parse_into_words(tokens: Vec<PreparedToken>) -> Result<Vec<Word>> {
                                         || following.pos2 == POS::RENTAIKA {
                                             eat_next = true;
                                         }
-                                }
+                                },
+                                _ => ()
                             }
                         }
                     }
@@ -323,6 +330,7 @@ pub fn parse_into_words(tokens: Vec<PreparedToken>) -> Result<Vec<Word>> {
                         pos = Some(PartOfSpeech::Verb);
                         grammar = Some(Grammar::Nominal)
                     },
+                    _ => ()
                 }    
             },
             POS::SETTOUSHI => {
@@ -374,9 +382,61 @@ pub fn parse_into_words(tokens: Vec<PreparedToken>) -> Result<Vec<Word>> {
             },
             POS::SONOTA => {
                 pos = Some(PartOfSpeech::Other)
-            }
+            },
+            _ => ()
         }
+    
+        // let's make sure we found *some* part of speech here
+        if pos.is_none() {
+            bail!("Part of speech couldn't be recognized for token {}", token.literal);
+        }
+        let pos = pos.unwrap();
+
+        if attach_to_previous && words.len() > 0 {
+            let mut last = words.last().unwrap();
+
+            last.tokens.push(token);
+            last.word.push_str(&token.literal);
+            last.extra.reading.push_str(&token.reading);
+            last.extra.transcription.push_str(&token.hatsuon);
+            if also_attach_to_lemma {
+                last.lemma.push_str(&token.lemma);
+            }
+            if update_pos {
+                last.part_of_speech = pos
+            }
+        } else {
+
+            let mut word = Word {
+                word: token.literal,
+                lemma: token.lemma,
+                part_of_speech: pos,
+                tokens: vec![token],
+                extra: WordExtra { 
+                    reading: token.reading, 
+                    transcription: token.hatsuon, 
+                    grammar 
+                }
+            };
+
+            if eat_next {
+                let Some(following) = iter.next() else {
+                    bail!("eat_next was set despite there being no following token")
+                };
+
+                word.tokens.push(following);
+                word.word.push_str(&following.literal);
+                word.extra.reading.push_str(&following.reading);
+                word.extra.transcription.push_str(&following.hatsuon);
+                if eat_lemma {
+                    word.lemma.push_str(&following.lemma)
+                }
+            }
+
+            words.push(word);
+        }
+        previous = Some(token);
     }
 
-    Ok(vec![])
+    Ok(words)
 }
