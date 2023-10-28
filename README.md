@@ -1,6 +1,6 @@
-## VE for Rust
+## Ve for Rust
 
-This is a port of the ruby gem https://github.com/Kimtaro/ve, famously used for the online Japanese dictionary https://jisho.org, to Rust. 🦀
+This is a port of the ruby gem https://github.com/Kimtaro/ve to Rust. 🦀
 
 The Rust version is meant to be used with https://github.com/daac-tools/vibrato/, a great and blazingly fast mecab-compatible tokenizer, and an IPADIC dictionary which can be found in the same repo (under Releases).
 
