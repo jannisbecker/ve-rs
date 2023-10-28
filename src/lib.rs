@@ -183,23 +183,6 @@ pub enum Grammar {
     Nominal,
 }
 
-// pub fn vibrato_tokenize(sentence: &str) -> Result<Vec<RawToken>> {
-//     let reader = zstd::Decoder::new(File::open("system.dic.zst")?)?;
-//     let mut dict = Dictionary::read(reader)?;
-
-//     let tokenizer = Tokenizer::new(dict)
-//         .ignore_space(true)?
-//         .max_grouping_len(24);
-//     let mut worker = tokenizer.new_worker();
-
-//     worker.reset_sentence(&sentence);
-//     worker.tokenize();
-
-//     let tokens: Vec<RawToken> = worker.token_iter().map(|t| t.into()).collect();
-
-//     Ok(tokens)
-// }
-
 pub fn prepare_tokens(raw_tokens: Vec<RawToken>) -> Result<Vec<PreparedToken>> {
     raw_tokens.into_iter().map(|raw_token| {
         let features: Vec<&str> = raw_token.feature.split(',').collect();

@@ -7,6 +7,10 @@ edition = "2021"
 name = "ve"
 path = "src/lib.rs"
 
+[[bin]]
+name = "test"
+path = "src/test.rs"
+
 [dependencies]
 anyhow = "1.0.75"
 vibrato = "0.5.1"
