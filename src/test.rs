@@ -1,14 +1,12 @@
 use std::fs::File;
 
 use anyhow::Result;
-use lib::RawToken;
+use ve::VibratoToken;
 use vibrato::{Dictionary, Tokenizer};
 
-mod lib;
-
-pub fn vibrato_tokenize(sentence: &str) -> Result<Vec<RawToken>> {
+pub fn vibrato_tokenize(sentence: &str) -> Result<Vec<VibratoToken>> {
     let reader = zstd::Decoder::new(File::open("system.dic.zst")?)?;
-    let mut dict = Dictionary::read(reader)?;
+    let dict = Dictionary::read(reader)?;
 
     let tokenizer = Tokenizer::new(dict)
         .ignore_space(true)?
@@ -18,7 +16,7 @@ pub fn vibrato_tokenize(sentence: &str) -> Result<Vec<RawToken>> {
     worker.reset_sentence(&sentence);
     worker.tokenize();
 
-    let tokens: Vec<RawToken> = worker.token_iter().map(|t| t.into()).collect();
+    let tokens: Vec<VibratoToken> = worker.token_iter().map(|t| t.into()).collect();
 
     Ok(tokens)
 }
@@ -41,12 +39,12 @@ fn main() {
     println!("Raw Tokens");
     println!("{}", debug_str);
 
-    let prepared_tokens = lib::prepare_tokens(raw_tokens).unwrap();
+    let prepared_tokens = ve::prepare_tokens(raw_tokens).unwrap();
 
     println!("Prepared Tokens");
     println!("{:#?}", prepared_tokens);
 
-    let words = lib::parse_into_words(prepared_tokens).unwrap();
+    let words = ve::parse_into_words(prepared_tokens).unwrap();
 
     println!("Words");
     println!("{:#?}", words);

@@ -1,14 +1,13 @@
 use anyhow::{bail, Result};
-use std::fs::File;
 
-use vibrato::{Dictionary, Tokenizer};
-
-pub struct RawToken {
+/// Simple struct that abstracts away vibrato's own Tokens
+/// that for some reason reference the worker they were tokenized from
+pub struct VibratoToken {
     pub surface: String,
     pub feature: String,
 }
 
-impl From<vibrato::token::Token<'_, '_>> for RawToken {
+impl From<vibrato::token::Token<'_, '_>> for VibratoToken {
     fn from(value: vibrato::token::Token) -> Self {
         Self {
             surface: value.surface().into(),
@@ -23,6 +22,7 @@ pub struct PreparedToken {
     pos: POS,
     pos2: POS,
     pos3: POS,
+    #[allow(dead_code)] // we're not using pos4 at all
     pos4: POS,
     inflection_type: POS,
     inflection_form: POS,
@@ -183,7 +183,7 @@ pub enum Grammar {
     Nominal,
 }
 
-pub fn prepare_tokens(raw_tokens: Vec<RawToken>) -> Result<Vec<PreparedToken>> {
+pub fn prepare_tokens(raw_tokens: Vec<VibratoToken>) -> Result<Vec<PreparedToken>> {
     raw_tokens.into_iter().map(|raw_token| {
         let features: Vec<&str> = raw_token.feature.split(',').collect();
 
@@ -202,12 +202,9 @@ pub fn prepare_tokens(raw_tokens: Vec<RawToken>) -> Result<Vec<PreparedToken>> {
         let parsed_inf_type = POS::from(inflection_type);
         let parsed_inf_form = POS::from(inflection_form);
 
-        if(parsed_pos == POS::Unset) { bail!("The main POS of token '{}' couldn't be identified", raw_token.surface);}
-        // if(parsed_pos2 == POS::Unknown) { bail!("The POS 2nd level of token '{}' couldn't be identified", raw_token.surface);}
-        // if(parsed_pos3 == POS::Unknown) { bail!("The POS 3rd level of token '{}' couldn't be identified", raw_token.surface);}
-        // if(parsed_pos4 == POS::Unknown) { bail!("The POS 4th level of token '{}' couldn't be identified", raw_token.surface);}
-        // if(parsed_inf_type == POS::Unknown) { bail!("The inflection type of token '{}' couldn't be identified", raw_token.surface);}
-        // if(parsed_inf_form == POS::Unknown) { bail!("The inflection form of token '{}' couldn't be identified", raw_token.surface);}
+        // We could check all others for unknown/invalid values too, 
+        // but since we're just acting upon values we know and otherwise leave tokens as is, it doesnt matter.
+        if parsed_pos == POS::Unset { bail!("The main POS of token '{}' couldn't be identified", raw_token.surface);}
 
         Ok(PreparedToken {
             literal: raw_token.surface,
