@@ -1,4 +1,4 @@
-## VE for Rust
+## Ve for Rust
 
 This is a port of the ruby gem https://github.com/Kimtaro/ve to Rust. 🦀
 
