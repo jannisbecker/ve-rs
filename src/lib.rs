@@ -191,9 +191,9 @@ pub fn prepare_tokens(raw_tokens: Vec<VibratoToken>) -> Result<Vec<PreparedToken
             bail!("Couldn't read all features from token. Make sure you're using an IPADIC dictionary")
         };
 
-        let lemma: &str = features.get(7).unwrap_or(&"");
-        let reading: &str = features.get(8).unwrap_or(&"");
-        let hatsuon: &str = features.get(9).unwrap_or(&"");
+        let lemma: &str = features.get(6).unwrap_or(&"");
+        let reading: &str = features.get(7).unwrap_or(&"");
+        let hatsuon: &str = features.get(8).unwrap_or(&"");
 
         let parsed_pos = POS::from(pos);
         let parsed_pos2 = POS::from(pos2);
