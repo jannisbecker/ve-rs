@@ -75,6 +75,8 @@ enum POS {
     Jinmei,
     MeireiI,
     Kakarijoshi,
+
+    Unset,
     Unknown,
 }
 
@@ -123,6 +125,7 @@ impl From<&str> for POS {
             "人名" => Self::Jinmei,
             "命令ｉ" => Self::MeireiI,
             "係助詞" => Self::Kakarijoshi,
+            "*" => Self::Unset,
             _ => Self::Unknown,
         }
     }
@@ -139,18 +142,18 @@ const SA: &str = "さ";
 #[derive(Debug)]
 
 pub struct Word {
-    word: String,
-    lemma: String, // dictionary form
-    part_of_speech: PartOfSpeech,
-    tokens: Vec<PreparedToken>,
-    extra: WordExtra,
+    pub word: String,
+    pub lemma: String, // dictionary form
+    pub part_of_speech: PartOfSpeech,
+    pub tokens: Vec<PreparedToken>,
+    pub extra: WordExtra,
 }
 
 #[derive(Debug)]
 pub struct WordExtra {
-    reading: String,
-    transcription: String,
-    grammar: Option<Grammar>,
+    pub reading: String,
+    pub transcription: String,
+    pub grammar: Option<Grammar>,
 }
 
 #[derive(PartialEq, Debug)]
@@ -180,28 +183,34 @@ pub enum Grammar {
     Nominal,
 }
 
-pub fn vibrato_tokenize(sentence: &str) -> Result<Vec<RawToken>> {
-    let reader = zstd::Decoder::new(File::open("system.dic.zst")?)?;
-    let mut dict = Dictionary::read(reader)?;
+// pub fn vibrato_tokenize(sentence: &str) -> Result<Vec<RawToken>> {
+//     let reader = zstd::Decoder::new(File::open("system.dic.zst")?)?;
+//     let mut dict = Dictionary::read(reader)?;
 
-    let tokenizer = Tokenizer::new(dict).ignore_space(true)?.max_grouping_len(24);
-    let mut worker = tokenizer.new_worker();
+//     let tokenizer = Tokenizer::new(dict)
+//         .ignore_space(true)?
+//         .max_grouping_len(24);
+//     let mut worker = tokenizer.new_worker();
 
-    worker.reset_sentence(&sentence);
-    worker.tokenize();
+//     worker.reset_sentence(&sentence);
+//     worker.tokenize();
 
-    let tokens: Vec<RawToken> = worker.token_iter().map(|t| t.into()).collect();
+//     let tokens: Vec<RawToken> = worker.token_iter().map(|t| t.into()).collect();
 
-    Ok(tokens)
-}
+//     Ok(tokens)
+// }
 
 pub fn prepare_tokens(raw_tokens: Vec<RawToken>) -> Result<Vec<PreparedToken>> {
     raw_tokens.into_iter().map(|raw_token| {
         let features: Vec<&str> = raw_token.feature.split(',').collect();
 
-        let [pos, pos2, pos3, pos4, inflection_type, inflection_form, lemma, reading, hatsuon, ..] = features[..9] else {
+        let [pos, pos2, pos3, pos4, inflection_type, inflection_form] = features[..6] else {
             bail!("Couldn't read all features from token. Make sure you're using an IPADIC dictionary")
         };
+
+        let lemma: &str = features.get(7).unwrap_or(&"");
+        let reading: &str = features.get(8).unwrap_or(&"");
+        let hatsuon: &str = features.get(9).unwrap_or(&"");
 
         let parsed_pos = POS::from(pos);
         let parsed_pos2 = POS::from(pos2);
@@ -210,17 +219,12 @@ pub fn prepare_tokens(raw_tokens: Vec<RawToken>) -> Result<Vec<PreparedToken>> {
         let parsed_inf_type = POS::from(inflection_type);
         let parsed_inf_form = POS::from(inflection_form);
 
-        if [
-            &parsed_pos,
-            &parsed_pos2,
-            &parsed_pos3,
-            &parsed_pos4,
-            &parsed_inf_type, 
-            &parsed_inf_form
-        ]
-        .into_iter().any(|p| p == &POS::Unknown) {
-            bail!("Some of the tokens POS or inflection info couldn't be parsed");
-        }
+        if(parsed_pos == POS::Unset) { bail!("The main POS of token '{}' couldn't be identified", raw_token.surface);}
+        // if(parsed_pos2 == POS::Unknown) { bail!("The POS 2nd level of token '{}' couldn't be identified", raw_token.surface);}
+        // if(parsed_pos3 == POS::Unknown) { bail!("The POS 3rd level of token '{}' couldn't be identified", raw_token.surface);}
+        // if(parsed_pos4 == POS::Unknown) { bail!("The POS 4th level of token '{}' couldn't be identified", raw_token.surface);}
+        // if(parsed_inf_type == POS::Unknown) { bail!("The inflection type of token '{}' couldn't be identified", raw_token.surface);}
+        // if(parsed_inf_form == POS::Unknown) { bail!("The inflection form of token '{}' couldn't be identified", raw_token.surface);}
 
         Ok(PreparedToken {
             literal: raw_token.surface,
