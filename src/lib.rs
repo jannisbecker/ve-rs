@@ -1,5 +1,8 @@
 use anyhow::{bail, Result};
 
+#[cfg(feature = "serde")]
+use serde::{Serialize, Deserialize};
+
 /// Simple struct that abstracts away vibrato's own Tokens
 /// that for some reason reference the worker they were tokenized from
 pub struct VibratoToken {
@@ -17,6 +20,7 @@ impl From<vibrato::token::Token<'_, '_>> for VibratoToken {
 }
 
 #[derive(Clone, Debug)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct PreparedToken {
     literal: String,
     pos: POS,
@@ -32,6 +36,7 @@ pub struct PreparedToken {
 }
 
 #[derive(PartialEq, Clone, Debug)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 enum POS {
     Meishi,
     KoyuuMeishi,
@@ -140,7 +145,7 @@ const NN: &str = "ん";
 const SA: &str = "さ";
 
 #[derive(Debug)]
-
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct Word {
     pub word: String,
     pub lemma: String, // dictionary form
@@ -150,6 +155,7 @@ pub struct Word {
 }
 
 #[derive(Debug)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct WordExtra {
     pub reading: String,
     pub transcription: String,
@@ -157,6 +163,7 @@ pub struct WordExtra {
 }
 
 #[derive(PartialEq, Debug)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub enum PartOfSpeech {
     Noun,
     ProperNoun,
@@ -178,6 +185,7 @@ pub enum PartOfSpeech {
 }
 
 #[derive(Debug)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub enum Grammar {
     Auxillary,
     Nominal,

@@ -1,6 +1,6 @@
 [package]
 name = "ve"
-version = "0.1.1"
+version = "0.1.2"
 edition = "2021"
 
 [lib]
@@ -11,7 +11,11 @@ path = "src/lib.rs"
 name = "test"
 path = "src/test.rs"
 
+[features]
+serde = ["dep:serde"]
+
 [dependencies]
 anyhow = "1.0.75"
+serde = { version = "1.0.190", optional = true, features = ["derive"] }
 vibrato = "0.5.1"
 zstd = "0.13.0"
