@@ -143,7 +143,7 @@ const SA: &str = "さ";
 
 pub struct Word {
     pub word: String,
-    pub lemma: String, // dictionary form
+    pub lemma: Option<String>, // dictionary form
     pub part_of_speech: PartOfSpeech,
     pub tokens: Vec<PreparedToken>,
     pub extra: WordExtra,
@@ -220,6 +220,14 @@ pub fn prepare_tokens(raw_tokens: Vec<VibratoToken>) -> Result<Vec<PreparedToken
         })
 
     }).collect()
+}
+
+fn sanitize_asterisk(value: &str) -> Option<String> {
+    if value.is_empty() || value == "*" {
+        Some(value.into())
+    } else {
+        None
+    }
 }
 
 pub fn parse_into_words(tokens: Vec<PreparedToken>) -> Result<Vec<Word>> {
@@ -420,9 +428,13 @@ pub fn parse_into_words(tokens: Vec<PreparedToken>) -> Result<Vec<Word>> {
             last.word.push_str(&token.literal);
             last.extra.reading.push_str(&token.reading);
             last.extra.transcription.push_str(&token.hatsuon);
+
             if also_attach_to_lemma {
-                last.lemma.push_str(&token.lemma);
+                if let Some(ref mut lemma) = last.lemma {
+                    lemma.push_str(&token.lemma)
+                }
             }
+
             if update_pos {
                 last.part_of_speech = pos
             }
@@ -434,7 +446,7 @@ pub fn parse_into_words(tokens: Vec<PreparedToken>) -> Result<Vec<Word>> {
 
             let mut word = Word {
                 word: token.literal,
-                lemma: token.lemma,
+                lemma: sanitize_asterisk(&token.lemma),
                 part_of_speech: pos,
                 tokens: vec![token2],
                 extra: WordExtra {
@@ -454,7 +466,9 @@ pub fn parse_into_words(tokens: Vec<PreparedToken>) -> Result<Vec<Word>> {
                 word.extra.reading.push_str(&following.reading);
                 word.extra.transcription.push_str(&following.hatsuon);
                 if eat_lemma {
-                    word.lemma.push_str(&following.lemma)
+                    if let Some(ref mut lemma) = word.lemma {
+                        lemma.push_str(&following.lemma)
+                    }
                 }
                 word.tokens.push(following);
             }
